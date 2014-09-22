@@ -8,7 +8,8 @@
     <string name="search_hint">Search Wallpapers</string>
     <string name="wallpapers">Wallpapers</string>
     <string name="favorites">Favorites</string>
+    <string name="searching">Searching</string>
 
-    <string name="wall_alphacoders_api_key">01c1e6e5952ec5bc45a65ca324579711</string>
-
+    <string name="api_key_flickr">03f215b342b9727d9cb077debdb0d9a3</string>
+    <string name="api_secret_flickr">885b6f9b6425dead</string>
 </resources>

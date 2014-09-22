@@ -1,7 +1,10 @@
 package com.jawnnypoo.wallpapergetter.fragments;
 
+import android.app.ActionBar;
 import android.app.Fragment;
+import android.app.LoaderManager;
 import android.content.Context;
+import android.content.Loader;
 import android.os.Bundle;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -12,7 +15,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import com.jawnnypoo.wallpapergetter.R;
-import com.jawnnypoo.wallpapergetter.data.Wallpaper;
+import com.jawnnypoo.wallpapergetter.data.FlickrImage;
+import com.jawnnypoo.wallpapergetter.loader.FlickrSearchLoader;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -22,11 +26,18 @@ import java.util.ArrayList;
  * 3.0, and are summarized very well here: http://developer.android.com/guide/components/fragments.html
  * Created by Jawn on 9/9/2014.
  */
-public class HomeFragment extends Fragment {
+public class HomeFragment extends Fragment implements LoaderManager.LoaderCallbacks<ArrayList<FlickrImage>> {
 
-    private static final String TAG = HomeFragment.class.getSimpleName();
+    public static final String TAG = HomeFragment.class.getSimpleName();
+
+    private static final int LOADER_SEARCH = 123;
+
+    private static final String STATE_SEARCH_TERM = "state_search_term";
+    private static final String STATE_PAGER_POSITION = "state_pager_position";
 
     private ViewPager mViewPager;
+    private String mSearchTerm;
+    private int mViewPagerPosition = -1;
     /**
      * DON'T USE THIS CONSTRUCTOR. Use the class's newInstance method instead. It allows for
      * one point of entry. We just need this blank constructor to make certain Android utils happy
@@ -48,6 +59,23 @@ public class HomeFragment extends Fragment {
         Bundle args = new Bundle();
         fragment.setArguments(args);
         return fragment;
+    }
+
+    /**
+     * Similar to activities, onCreate is where we could perform first time initializations
+     * and restore data upon rotation
+     * @param savedInstanceState
+     */
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (savedInstanceState == null) {
+            mSearchTerm = "cats";
+            updateActionBarText("cats");
+        } else {
+            mSearchTerm = savedInstanceState.getString(STATE_SEARCH_TERM);
+            mViewPagerPosition = savedInstanceState.getInt(STATE_PAGER_POSITION, -1);
+        }
     }
 
     /**
@@ -73,43 +101,90 @@ public class HomeFragment extends Fragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         mViewPager = (ViewPager) view.findViewById(R.id.view_pager);
+        mViewPager.setAdapter(new WallpaperPagerAdapter(getActivity(), null));
     }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mViewPager.setAdapter(new WallpaperPagerAdapter(getActivity(), getFakeImages()));
+        //init loader will initialize and start the loader if the loader has not
+        //already been run, otherwise, it will return right away in onLoadFinished
+        getLoaderManager().initLoader(LOADER_SEARCH, null, this);
     }
 
-    private ArrayList<Wallpaper> getFakeImages() {
-        ArrayList<Wallpaper> wallpapers = new ArrayList<Wallpaper>();
-        for (int i=0; i<10; i++) {
-            wallpapers.add(new Wallpaper(i, "http://lorempixel.com/output/cats-q-c-640-480-5.jpg"));
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString(STATE_SEARCH_TERM, mSearchTerm);
+        if (mViewPager != null) {
+            outState.putInt(STATE_PAGER_POSITION, mViewPager.getCurrentItem());
         }
-        return wallpapers;
     }
+
+    public void updateSearch(String searchTerm) {
+        mSearchTerm = searchTerm;
+        updateActionBarText(searchTerm);
+        mViewPagerPosition = 0;
+        getLoaderManager().restartLoader(LOADER_SEARCH, null, this);
+    }
+
+    private void updateActionBarText(String text) {
+        ActionBar actionBar = getActivity().getActionBar();
+        actionBar.setTitle(getActivity().getString(R.string.searching) + " \"" + text + "\"");
+    }
+
+    @Override
+    public Loader<ArrayList<FlickrImage>> onCreateLoader(int id, Bundle args) {
+        switch (id) {
+            case LOADER_SEARCH:
+                FlickrSearchLoader searchLoader = new FlickrSearchLoader(getActivity(), mSearchTerm);
+                searchLoader.forceLoad();
+                return searchLoader;
+        }
+        return null;
+    }
+
+    @Override
+    public void onLoadFinished(Loader<ArrayList<FlickrImage>> loader, ArrayList<FlickrImage> data) {
+        switch (loader.getId()) {
+            case LOADER_SEARCH:
+                Log.d(TAG, "onLoadFinished");
+                if (data != null && data.size() > 0) {
+                    ((WallpaperPagerAdapter) mViewPager.getAdapter()).setImages(data);
+                    if (mViewPagerPosition != -1 && mViewPagerPosition < data.size()) {
+                        Log.d(TAG, "Moving current position to " + mViewPagerPosition);
+                        mViewPager.setCurrentItem(mViewPagerPosition);
+                    }
+                }
+                break;
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<ArrayList<FlickrImage>> loader) { }
 
     private class WallpaperPagerAdapter extends PagerAdapter {
-        ArrayList<Wallpaper> mWallpapers;
+        ArrayList<FlickrImage> mImages;
         Context mContext;
         LayoutInflater mLayoutInflater;
 
-        public WallpaperPagerAdapter(Context context, ArrayList<Wallpaper> images) {
+        public WallpaperPagerAdapter(Context context, ArrayList<FlickrImage> images) {
             mContext = context;
-            mWallpapers = images;
+            mImages = images;
             mLayoutInflater = LayoutInflater.from(mContext);
         }
 
-        public void setImages(ArrayList<Wallpaper> images) {
-            mWallpapers = images;
+        public void setImages(ArrayList<FlickrImage> images) {
+            mImages = images;
+            notifyDataSetChanged();
         }
 
         @Override
         public int getCount() {
-            if (mWallpapers == null) {
+            if (mImages == null) {
                 return 0;
             } else {
-                return mWallpapers.size();
+                return mImages.size();
             }
         }
 
@@ -121,8 +196,9 @@ public class HomeFragment extends Fragment {
         @Override
         public Object instantiateItem(ViewGroup container, int position) {
             View view = mLayoutInflater.inflate(R.layout.item_wallpaper, container, false);
-            Wallpaper wallpaper = mWallpapers.get(position);
+            FlickrImage wallpaper = mImages.get(position);
             ImageView image = (ImageView) view.findViewById(R.id.wallpaper);
+            Log.v(TAG, "Loading image url: " + wallpaper.getUrl());
             Picasso.with(mContext).load(wallpaper.getUrl()).into(image);
             view.setTag(wallpaper);
             container.addView(view);

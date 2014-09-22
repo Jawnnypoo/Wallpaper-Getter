@@ -20,6 +20,9 @@ public class HomeActivity extends Activity implements SearchView.OnQueryTextList
 
     private static final String TAG = HomeActivity.class.getSimpleName();
 
+    //We need to save a reference to the fragment so that we can send the search
+    //term to the fragment
+    private HomeFragment mHomeFragment;
     //Save a reference to our search menu item so that we can do things with it
     //later on
     private MenuItem mSearchMenuItem;
@@ -32,10 +35,12 @@ public class HomeActivity extends Activity implements SearchView.OnQueryTextList
         //Keep in mind, saved instance state is null only once, when we first start the activity. So,
         //here we perform all of the actions only once.
         if (savedInstanceState == null) {
-            HomeFragment homeFragment = HomeFragment.newInstance();
+            mHomeFragment = HomeFragment.newInstance();
             getFragmentManager().beginTransaction()
-                    .add(R.id.activity_root, homeFragment)
+                    .add(R.id.activity_root, mHomeFragment, HomeFragment.TAG)
                     .commit();
+        } else {
+            mHomeFragment = (HomeFragment) getFragmentManager().findFragmentByTag(HomeFragment.TAG);
         }
     }
 
@@ -126,7 +131,9 @@ public class HomeActivity extends Activity implements SearchView.OnQueryTextList
         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
             String query = intent.getStringExtra(SearchManager.QUERY);
             Log.d(TAG, "Search term from search view: " + query);
-            //use the query to search your data somehow
+            if (mHomeFragment != null) {
+                mHomeFragment.updateSearch(query);
+            }
         }
     }
 }
