@@ -4,12 +4,14 @@ import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.SearchView;
 
+import com.jawnnypoo.wallpapergetter.data.WallpaperSharedPreferenceManager;
 import com.jawnnypoo.wallpapergetter.fragments.HomeFragment;
 
 /**
@@ -19,6 +21,10 @@ import com.jawnnypoo.wallpapergetter.fragments.HomeFragment;
 public class HomeActivity extends Activity implements SearchView.OnQueryTextListener{
 
     private static final String TAG = HomeActivity.class.getSimpleName();
+
+    //An identifier in case this activity could launch many different activities and
+    //expect results from them all.
+    public static final int REQUEST_CHANGE_SETTINGS = 123;
 
     //We need to save a reference to the fragment so that we can send the search
     //term to the fragment
@@ -42,6 +48,8 @@ public class HomeActivity extends Activity implements SearchView.OnQueryTextList
         } else {
             mHomeFragment = (HomeFragment) getFragmentManager().findFragmentByTag(HomeFragment.TAG);
         }
+
+        updateUiFromSharedPreferences();
     }
 
     @Override
@@ -85,21 +93,12 @@ public class HomeActivity extends Activity implements SearchView.OnQueryTextList
     private void gotoSettings() {
         Intent intent = SettingsActivity.newInstance(this);
         //Launch the activity!
-        gotoActivity(intent);
+        startActivityForResult(intent, REQUEST_CHANGE_SETTINGS);
     }
 
     private void gotoFavorites() {
         Intent intent = FavoritesActivity.newInstance(this);
         //Launch the activity!
-        gotoActivity(intent);
-    }
-
-    /**
-     * We have this method to sort of act as a wrapper for startActivity
-     * so that we could perform other actions if we wanted to
-     * @param intent
-     */
-    private void gotoActivity(Intent intent) {
         startActivity(intent);
     }
 
@@ -135,5 +134,20 @@ public class HomeActivity extends Activity implements SearchView.OnQueryTextList
                 mHomeFragment.updateSearch(query);
             }
         }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CHANGE_SETTINGS) {
+            if (resultCode == RESULT_OK) {
+                updateUiFromSharedPreferences();
+            }
+        }
+    }
+
+    private void updateUiFromSharedPreferences() {
+        int chosenColor = WallpaperSharedPreferenceManager.getColorPreference(this);
+        getWindow().setBackgroundDrawable(new ColorDrawable(chosenColor));
     }
 }

@@ -25,10 +25,15 @@
                 <action android:name="android.intent.action.SEARCH" />
             </intent-filter>
         </activity>
-
         <activity android:name=".SettingsActivity"/>
-
         <activity android:name=".FavoritesActivity"/>
+
+        <service android:name=".services.ImageDownloadService" />
+
+        <provider android:name=".data.WallpaperGetterContentProvider"
+            android:exported="false"
+            android:authorities="com.jawnnypoo.wallpapergetter"/>
+
     </application>
 
 </manifest>

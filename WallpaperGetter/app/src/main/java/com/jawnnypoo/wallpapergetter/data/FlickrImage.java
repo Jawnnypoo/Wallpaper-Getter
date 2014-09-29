@@ -1,5 +1,8 @@
 package com.jawnnypoo.wallpapergetter.data;
 
+import android.database.Cursor;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.Log;
 
 import org.json.JSONException;
@@ -9,7 +12,7 @@ import org.json.JSONObject;
  * Data that will represent an image from Flickr that we get from the API
  * Created by Jawn on 9/14/2014.
  */
-public class FlickrImage {
+public class FlickrImage implements Parcelable {
 
     private static final String TAG = FlickrImage.class.getSimpleName();
 
@@ -23,6 +26,7 @@ public class FlickrImage {
     private static final String FIELD_SERVER = 	"server";
     private static final String FIELD_TITLE = 	"title";
 
+    private String mRawJSON;
     private int mFarm;
     private String mId;
     private boolean mIsPublic;
@@ -41,6 +45,7 @@ public class FlickrImage {
     public static FlickrImage fromJSON(JSONObject jsonObject) {
         try {
             FlickrImage flickrImage = new FlickrImage();
+            flickrImage.mRawJSON = jsonObject.toString();
             if (jsonObject.has(FIELD_FARM)) {
                 flickrImage.mFarm = jsonObject.getInt(FIELD_FARM);
             }
@@ -77,8 +82,30 @@ public class FlickrImage {
         return null;
     }
 
+    public static FlickrImage fromCursor(Cursor cursor) {
+        String json = cursor.getString(cursor.getColumnIndex(WallpaperGetterContentProvider.KEY_COLUMN_JSON));
+        try {
+            return fromJSON(new JSONObject(json));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public String getId() {
+        return mId;
+    }
+
+    public String getTitle() {
+        return mTitle;
+    }
+
     public String getUrl() {
         return mUrl;
+    }
+
+    public String getRawJSON() {
+        return mRawJSON;
     }
 
     /**
@@ -95,4 +122,51 @@ public class FlickrImage {
                 + flickrImage.mSecret
                 + ".jpg";
     }
+
+    protected FlickrImage(Parcel in) {
+        mRawJSON = in.readString();
+        mFarm = in.readInt();
+        mId = in.readString();
+        mIsPublic = in.readByte() != 0x00;
+        mIsFamily = in.readByte() != 0x00;
+        mIsFriend = in.readByte() != 0x00;
+        mOwner = in.readString();
+        mSecret = in.readString();
+        mServer = in.readString();
+        mTitle = in.readString();
+        mUrl = in.readString();
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(mRawJSON);
+        dest.writeInt(mFarm);
+        dest.writeString(mId);
+        dest.writeByte((byte) (mIsPublic ? 0x01 : 0x00));
+        dest.writeByte((byte) (mIsFamily ? 0x01 : 0x00));
+        dest.writeByte((byte) (mIsFriend ? 0x01 : 0x00));
+        dest.writeString(mOwner);
+        dest.writeString(mSecret);
+        dest.writeString(mServer);
+        dest.writeString(mTitle);
+        dest.writeString(mUrl);
+    }
+
+    @SuppressWarnings("unused")
+    public static final Parcelable.Creator<FlickrImage> CREATOR = new Parcelable.Creator<FlickrImage>() {
+        @Override
+        public FlickrImage createFromParcel(Parcel in) {
+            return new FlickrImage(in);
+        }
+
+        @Override
+        public FlickrImage[] newArray(int size) {
+            return new FlickrImage[size];
+        }
+    };
 }
