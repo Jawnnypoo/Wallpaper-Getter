@@ -14,7 +14,7 @@ import android.util.Log;
 public class WallpaperSharedPreferenceManager {
     private static final String TAG = WallpaperSharedPreferenceManager.class.getSimpleName();
 
-    private static final String PREFERENCE_FILE = "wallpaperSharedPreferences";
+    public static final String PREFERENCE_FILE = "wallpaperSharedPreferences";
     private static final String KEY_COLOR_PREFERENCE = "key_color_preference";
 
     private static final int DEFAULT_COLOR_PREFERENCE = Color.WHITE;

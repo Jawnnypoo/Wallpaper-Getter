@@ -23,9 +23,13 @@
     <application
         android:name=".WallpaperGetterApplication"
         android:allowBackup="true"
+        android:backupAgent=".WallpaperGetterBackupAgent"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
+
+        <meta-data android:name="com.google.android.backup.api_key" android:value="AEdPqrEAAAAIRFNmrlB-n33ssH5BnSifntm-O2VKL4GdDZ5yMw" />
+
         <activity
             android:name=".HomeActivity"
             android:label="@string/app_name"
