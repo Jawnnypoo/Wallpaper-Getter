@@ -1,6 +1,7 @@
 # Wallpaper-Getter
 Codebase for Android 1 and 2 class at Collin County Community College
 
+The notes that correspond to the repository can be found [here](https://docs.google.com/document/d/1pFxvfqCbaz_Zo3j73vbGLlyFBC9XV4tLetwlHhbAvFo/edit?usp=sharing)
 
 License
 --------
